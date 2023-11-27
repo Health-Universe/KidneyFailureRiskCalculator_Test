@@ -1,4 +1,4 @@
-# KidneyFailureRiskCalculator
+# Kidney Failure Risk Calculator
 
 The kidney failure risk equations were initially developed using patients in Canada with chronic kidney disease (CKD) stages G3-G5. These equations have since been validated in a diverse population of over 700,000 individuals across more than 30 countries worldwide.
 
