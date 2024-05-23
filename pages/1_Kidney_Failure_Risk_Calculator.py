@@ -1,5 +1,6 @@
 import streamlit as st
 import time
+from datetime import datetime
 
 def calculate_kidney_failure_risk_score(eGFR, sex, urine_albumin_to_creatinine_ratio, age, serum_albumin, serum_phosphorus, serum_bicarbonate, serum_calcium):
     # Define point values
@@ -9,7 +10,7 @@ def calculate_kidney_failure_risk_score(eGFR, sex, urine_albumin_to_creatinine_r
         (50, 54): 5, (55, 59): 10
     }
 
-    sex_points = {'Female': 0, 'Male': -2}
+    sex_points = {'Female [SNOMED CT: 248152002]': 0, 'Male [SNOMED CT: 248153007]': -2}
 
     urine_albumin_points = {'<30': 0, '30-300': -14, '>300': -22}
 
@@ -127,16 +128,54 @@ st.divider()
 
 # Collect user inputs
 eGFR_options = ['10-14', '15-19', '20-24', '25-29', '30-34', '35-39', '40-44', '45-49', '50-54', '55-59']
-eGFR_selected_range = st.selectbox('GFR, mL/min/1.73m^2', eGFR_options,help="The Glomerular Filtration Rate (GFR) is a crucial test for assessing kidney function and determining the stage of kidney disease. It is calculated based on your blood creatinine levels, age, and sex. A lower GFR indicates poorer kidney function. If your GFR drops below 30, consulting a nephrologist is advised, and if it falls below 15, discussions about treatments for kidney failure will begin.")
+eGFR_selected_range = st.selectbox('GFR, mL/min/1.73m\u00b2 [LOINC: 33914-3]', eGFR_options,help="The Glomerular Filtration Rate (GFR) is a crucial test for assessing kidney function and determining the stage of kidney disease. It is calculated based on your blood creatinine levels, age, and sex. A lower GFR indicates poorer kidney function. If your GFR drops below 30, consulting a nephrologist is advised, and if it falls below 15, discussions about treatments for kidney failure will begin.")
 # Convert the selected range into a numerical value (midpoint)
 eGFR = sum(map(int, eGFR_selected_range.split('-'))) / 2 if eGFR_selected_range != 'Select' else None
-sex = st.radio('Sex', ['Female', 'Male'])
-urine_albumin_to_creatinine_ratio = st.selectbox('Urine Albumin-to-Creatinine Ratio mg/g', ['<30', '30-300', '>300'], help="Healthy kidneys filter waste, retaining large cells like red blood cells and proteins. Kidney failure causes these large cells to leak into urine, leading to damage and scarring. Doctors assess the ratio of albumin to creatinine in urine (normal level: <30 mg/g) to gauge kidney function.")
-age = st.selectbox('Age', ['<30', '30-39', '40-49', '50-59', '60-69', '70-79', '80-89', '≥90'])
-serum_albumin = st.selectbox('Serum Albumin, g/dL(g/L)', ['≤2.5 (≤25)', '2.6-3.0 (26-30)', '3.1-3.5 (31-35)', '≥3.6 (≥36)'], help="Albumin, a protein from the diet, is produced in the body. Kidney dysfunction leads to its leakage into urine. Testing albumin levels in kidney disease patients' blood indicates nutritional status. Low albumin levels may compromise the body's ability to fend off infections.")
-serum_phosphorus = st.selectbox('Serum Phosphorus, mg/dL (mmol/L)', ['<3.5 (<1.13)', '3.5-4.5 (1.13-1.45)', '4.6-5.5 (1.49-1.78)', '>5.5 (>1.78)'], help="Phosphorus, essential for bone health alongside calcium, is normally regulated by healthy kidneys. In advanced kidney disease, phosphorus buildup can cause serious issues like organ damage, poor circulation, bone pain, and skin sores. Managing diet and medications, with guidance from a dietitian, is key to maintaining normal phosphorus levels. Doctors may also prescribe phosphate-binding medication to control blood levels.")
-serum_bicarbonate = st.selectbox('Serum Bicarbonate, mEq/L', ['<18', '18-22', '23-25', '>25'], help="Impaired kidney function can disrupt the balance of acidity in the blood, causing Metabolic Acidosis. This condition poses risks to bones, muscles, and kidney health. Monitoring bicarbonate levels, the substance that counteracts high acidity, is crucial. If bicarbonate levels drop too low, your doctor may prescribe medications to raise them.")
-serum_calcium = st.selectbox('Serum Calcium, mg/dL (mmol/L)', ['≤8.5 (≤2.12)', '8.6-9.5 (2.12-2.37)', '≥9.6 (≥2.4)'], help="Corrected calcium, a crucial mineral, partners with phosphate to strengthen bones and regulate muscle, heart, and blood functions. Kidneys play a key role in maintaining balanced corrected calcium levels. In Chronic Kidney Disease, imbalances can lead to heart issues. Elevated corrected calcium levels may cause various symptoms, while low levels may necessitate a prescribed supplement. Dietary adjustments and medications may be recommended to manage corrected calcium levels.")
+sex = st.radio('Sex [SNOMED CT: 734000001]', ['Female [SNOMED CT: 248152002]', 'Male [SNOMED CT: 248153007]'])
+urine_albumin_to_creatinine_ratio = st.selectbox('Urine Albumin-to-Creatinine Ratio mg/g{creat} [LOINC: 14959-1]', ['<30', '30-300', '>300'], help="Healthy kidneys filter waste, retaining large cells like red blood cells and proteins. Kidney failure causes these large cells to leak into urine, leading to damage and scarring. Doctors assess the ratio of albumin to creatinine in urine (normal level: <30 mg/g) to gauge kidney function.")
+
+#age = st.selectbox('Age', ['<30', '30-39', '40-49', '50-59', '60-69', '70-79', '80-89', '≥90'])
+
+def calculate_age_range(birthdate):
+    birthdate = datetime.strptime(birthdate, "%Y-%m-%d")
+    today = datetime.today()
+    age = today.year - birthdate.year - ((today.month, today.day) < (birthdate.month, birthdate.day))
+    if age < 30:
+        return '<30'
+    elif 30 <= age < 40:
+        return '30-39'
+    elif 40 <= age < 50:
+        return '40-49'
+    elif 50 <= age < 60:
+        return '50-59'
+    elif 60 <= age < 70:
+        return '60-69'
+    elif 70 <= age < 80:
+        return '70-79'
+    elif 80 <= age < 90:
+        return '80-89'
+    else:
+        return '≥90'
+
+current_date = datetime.today().strftime('%Y-%m-%d')
+birthday = st.text_input("Date of Birth (YYYY-MM-DD)", value=current_date)
+# Validate date input
+
+try:
+
+    age = calculate_age_range(birthday)
+
+except ValueError:
+
+    st.error("Please enter a valid date in the format YYYY-MM-DD")
+
+    st.stop()
+#age = calculate_age_range(birthday)
+
+serum_albumin = st.selectbox('Serum Albumin, g/dL(g/L) [LOINC: 1751-7]', ['≤2.5 (≤25)', '2.6-3.0 (26-30)', '3.1-3.5 (31-35)', '≥3.6 (≥36)'], help="Albumin, a protein from the diet, is produced in the body. Kidney dysfunction leads to its leakage into urine. Testing albumin levels in kidney disease patients' blood indicates nutritional status. Low albumin levels may compromise the body's ability to fend off infections.")
+serum_phosphorus = st.selectbox('Serum Phosphorus, mg/dL (mmol/L) [LOINC: 2777-1]', ['<3.5 (<1.13)', '3.5-4.5 (1.13-1.45)', '4.6-5.5 (1.49-1.78)', '>5.5 (>1.78)'], help="Phosphorus, essential for bone health alongside calcium, is normally regulated by healthy kidneys. In advanced kidney disease, phosphorus buildup can cause serious issues like organ damage, poor circulation, bone pain, and skin sores. Managing diet and medications, with guidance from a dietitian, is key to maintaining normal phosphorus levels. Doctors may also prescribe phosphate-binding medication to control blood levels.")
+serum_bicarbonate = st.selectbox('Serum Bicarbonate, meq/L [LOINC: 1963-8]', ['<18', '18-22', '23-25', '>25'], help="Impaired kidney function can disrupt the balance of acidity in the blood, causing Metabolic Acidosis. This condition poses risks to bones, muscles, and kidney health. Monitoring bicarbonate levels, the substance that counteracts high acidity, is crucial. If bicarbonate levels drop too low, your doctor may prescribe medications to raise them.")
+serum_calcium = st.selectbox('Serum Calcium, mg/dL (mmol/L) [LOINC: 17861-6]', ['≤8.5 (≤2.12)', '8.6-9.5 (2.12-2.37)', '≥9.6 (≥2.4)'], help="Corrected calcium, a crucial mineral, partners with phosphate to strengthen bones and regulate muscle, heart, and blood functions. Kidneys play a key role in maintaining balanced corrected calcium levels. In Chronic Kidney Disease, imbalances can lead to heart issues. Elevated corrected calcium levels may cause various symptoms, while low levels may necessitate a prescribed supplement. Dietary adjustments and medications may be recommended to manage corrected calcium levels.")
 
 # Calculate and display results
 if st.button('Calculate Risk'):
