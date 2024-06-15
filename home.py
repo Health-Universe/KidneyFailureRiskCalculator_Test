@@ -17,5 +17,6 @@ Assessing the probability of kidney failure can be valuable for facilitating com
 """)
 
 st.divider()
-st.markdown("""App Created by [Health Universe](https://www.healthuniverse.com) 🚀
+#st.markdown("""App Created by [Health Universe](https://www.healthuniverse.com) 🚀
             (Kinal Patel & Mitchell Parker)""")
+st.image("HU_Logo.svg")
